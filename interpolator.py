@@ -1,24 +1,19 @@
 from EquationSolver import EquationSolver
 
-
 class Interpolator:
 
     @staticmethod
-    def lagrange(xp, yp, x):
+    def lagrange(a, x):
         y = 0
-        for i in range(0, len(xp)):
-            f = 1
-            for j in range(0, len(xp)):
-                if i != j:
-                    f *= (x - xp[j])
-                    f /= (xp[i] - xp[j])
-            y += f * yp[i]
+        xx = 1
+        for ai in a:
+            y += xx * ai
+            xx *= x
         return y
 
     @staticmethod
     def splines(xp, yp, xs, x):
         n = len(xp) - 1
-        h = abs(xp[1] - xp[0])
         xi = -1
         for i in range(0, n):
             if (x >= xp[i]) & (x <= xp[i + 1]):
@@ -33,6 +28,34 @@ class Interpolator:
         y += xs[xi * 4 + 2] * (x - xp[xi]) ** 2
         y += xs[xi * 4 + 3] * (x - xp[xi]) ** 3
         return y
+
+    @staticmethod
+    def prepLagrange(xp, yp):
+        a = []
+        for i in range(0, len(xp)):
+            f = [1]
+            denominator = 1
+            for j in range(0, len(xp)):
+                if i != j:
+                    f = Interpolator.polyMultiply(f, [-xp[j], 1])
+                    denominator *= (xp[i] - xp[j])
+            for j in range(0, len(f)):
+                f[j] /= denominator
+                f[j] *= yp[i]
+            a.append(f)
+        b = [0 for x in range(len(xp))]
+        for i in range(0, len(xp)):
+            for j in range(0, len(a)):
+                b[i] += a[j][i]
+        return b
+
+    @staticmethod
+    def polyMultiply(p1, p2):
+        poly = [0] * (len(p1) + len(p2) - 1)
+        for i in range(len(p1)):
+            for j in range(len(p2)):
+                poly[i + j] += p1[i] * p2[j]
+        return poly
 
     @staticmethod
     def prepSplines(xp, yp):
