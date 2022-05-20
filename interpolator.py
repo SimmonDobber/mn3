@@ -10,33 +10,35 @@ class Interpolator:
             f = 1
             for j in range(0, len(xp)):
                 if i != j:
-                    f *= (x - xp[i])
+                    f *= (x - xp[j])
                     f /= (xp[i] - xp[j])
             y += f * yp[i]
         return y
 
     @staticmethod
-    def splines(xp, yp, x):
+    def splines(xp, yp, xs, x):
         n = len(xp) - 1
-        N = n * 4
         h = abs(xp[1] - xp[0])
-        M, b = Interpolator.getSplinesMatrixAndVector(xp, yp, n, N, h)
-        equationSolver = EquationSolver(M, b, N)
-        x = equationSolver.Solve()
-        xi = 0
+        xi = -1
         for i in range(0, n):
-            if x >= xp[i] & x <= xp[i + 1]:
+            if (x >= xp[i]) & (x <= xp[i + 1]):
                 xi = i
-                break
+
+        if xi == -1:
+            y = yp[len(yp) - 1]
+            return y
         y = 0
-        y += x[xi * 4]
-        y += x[xi * 4 + 1] * h
-        y += x[xi * 4 + 2] * h ** 2
-        y += x[xi * 4 + 3] * h ** 3
+        y += xs[xi * 4]
+        y += xs[xi * 4 + 1] * (x - xp[xi])
+        y += xs[xi * 4 + 2] * (x - xp[xi]) ** 2
+        y += xs[xi * 4 + 3] * (x - xp[xi]) ** 3
         return y
 
     @staticmethod
-    def getSplinesMatrixAndVector(xp, yp, n, N, h):
+    def prepSplines(xp, yp):
+        n = len(xp) - 1
+        N = n * 4
+        h = abs(xp[1] - xp[0])
         M = [[0 for x in range(0, N)] for y in range(0, N)]
         b = [0 for x in range(0, N)]
         for i in range(0, n):
@@ -60,9 +62,6 @@ class Interpolator:
         M[n * 4 - 2][2] = 1
         M[n * 4 - 1][n * 4 - 2] = 2
         M[n * 4 - 1][n * 4 - 1] = 6 * h
-        return M, b
-
-
-
-
-
+        equationSolver = EquationSolver(M, b, N)
+        xs = equationSolver.Solve()
+        return xs
